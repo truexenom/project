@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="http://smc-dash-dev-1.phx7.llnw.net:8081/css/bootstrap.min.css" </head> <body>
+    {% block css %}{% endblock %}
+    <script src="http://smc-dash-dev-1.phx7.llnw.net:8081/js/jquery-3.4.1.min.js"></script>
+    <script src="http://smc-dash-dev-1.phx7.llnw.net:8081/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    {% block js_libs %}{% endblock %}
+
+<body class='text=dark bg-light'>
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href={{ routes['root'].url_for() }}>SMC Dashboard</a>
+        <form class="form-inline my-2 my-lg-0">
+            {# <span {% if not is_logged %}hidden{% endif %} class='navbar-text mr-sm-2'>{{ user_name }}</span>
+            <a href={{ routes['login'].url_for() }} class="float-right btn btn-dark my-lg-0 mr-sm-1" {% if is_logged %}hidden{% endif %}>Login</a>
+            <a href={{ routes['logout'].url_for() }} class="float-right btn btn-dark my-lg-0 mr-sm-1" {% if not is_logged %}hidden{% endif %}>Logout</a> #}
+            <input class="form-control mr-sm-2" type="date" name="date" id="date"
+                value="{{ date.strftime('%Y-%m-%d') }}" aria-label="Date">
+            <button class="btn btn-light my-2 my-sm-0" id='search' type='button'>Search</button>
+        </form>
+    </nav>
+    {% block body %}{% endblock %}
+</body>
+
+{% block js %}{% endblock %}
+</html>

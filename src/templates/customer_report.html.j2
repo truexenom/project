@@ -1,0 +1,186 @@
+{% extends "base.html.j2" %}
+
+<!-- {% block title %}{{ customer_name }}{% endblock %} -->
+
+{% block js %}
+<script>
+  date = $("#date").val()
+  customer_name = $("#customer_name").text()
+  $.ajax({
+    type: "GET",
+    url: `/date/${date}/customer/${customer_name}/report`,
+    beforeSend: function () {
+      $("#spinner").show();
+    },
+    success: function (data) {
+      daily_traffic_by_hour_chart = document.getElementById('daily_traffic_by_hour_chart');
+      daily_traffic_by_hour = [{
+        x: data.daily_traffic_by_hour.x,
+        y: data.daily_traffic_by_hour.y,
+        line: {color: '#3B92CF'},
+        fill: 'tozeroy',
+        fillcolor: '#3B92CF',
+        type: 'scatter'
+      }];
+      dth_layout = {
+        paper_bgcolor: 'black',
+        plot_bgcolor: 'black'
+      }
+      Plotly.newPlot(daily_traffic_by_hour_chart, daily_traffic_by_hour, dth_layout);
+
+      daily_traffic_chart = document.getElementById('daily_traffic_chart');
+      daily_traffic = [{
+        x: data.daily_traffic.x,
+        y: data.daily_traffic.y,
+        type: 'scatter',
+        mode: 'lines+markers',
+      }];
+      dt_layout = {
+        paper_bgcolor: 'black',
+        plot_bgcolor: 'black'
+      }
+      Plotly.newPlot(daily_traffic_chart, daily_traffic, dt_layout, {responsive: true});
+
+      traffic_dist_chart = document.getElementById('traffic_dist_chart');
+      traffic_dist = [{
+        x: data.traffic_dist.x,
+        y: data.traffic_dist.y,
+        type: 'bar',
+        marker: {
+          color: '#EF6C2B',
+        },
+      }];
+      td_layout = {
+        paper_bgcolor: 'black',
+        plot_bgcolor: 'black',
+        yaxis: {
+          title: {
+            text: 'Placeholder'
+          },
+        }
+      }
+      Plotly.newPlot(traffic_dist_chart, traffic_dist, td_layout);
+
+      $("#spinner").hide();
+      $("#report").show();
+
+      data.monthly_data.forEach(function (item, index) {
+        md = document.getElementById('md' + index);
+        month = document.getElementById('mon_name' + index);
+        md.innerHTML = formatBytes(item[1])
+        month.innerHTML = item[0]
+        avg = document.getElementById('av' + index);
+        avg.innerHTML = formatBytes(item[2])
+      });
+
+
+      function formatBytes(a,b){
+        if(0==a)return"0 Bytes";
+        var c=1024,d=b||2,e=["Bytes", "KB","MB","GB","TB"],f=Math.floor(Math.log(a)/Math.log(c));
+        if (typeof e[f] === 'undefined'){
+          degree = e.slice(-1)[0]
+        }else{
+          degree = e[f]
+        }
+        return parseFloat((a/Math.pow(c,f)).toFixed(d))+" "+degree
+        }
+
+      function getPercents(current, other){
+        dif = (current - other) / other * 100
+        return Math.round(dif)
+      }
+
+      var total_daily_traffic = document.getElementById('total_daily_traffic');
+      current = data.daily_traffic.y.slice(-1)[0]
+      total_daily_traffic.innerHTML = formatBytes(current, 2);
+      week_ago = data.daily_traffic.y[data.daily_traffic.y.length - 7]
+      var daily_traffic_dow = document.getElementById('daily_traffic_dow');
+      dow = getPercents(current, week_ago)
+      daily_traffic_dow.innerHTML = ((dow > 0) ? '+' : '') + dow + '%'
+      day_ago = data.daily_traffic.y[data.daily_traffic.y.length - 2]
+      var daily_traffic_dod = document.getElementById('daily_traffic_dod');
+      dod = getPercents(current, day_ago)
+      daily_traffic_dod.innerHTML = ((dod > 0) ? '+' : '') + dod  + '%'
+    },
+    error: function () {
+    }
+  });
+  search_button = document.getElementById("search");
+  search_button.onclick = function() {
+    date = $("#date").val()
+    location.href = `/${date}/${customer_name}`;
+  };
+</script>
+{% endblock %}
+
+{% block body %}
+{% include "spinner.html.j2" %}
+<div class="container" style='display: none;' id='report'>
+
+  <h2><span id='customer_name'>{{ customer_name }}</span> - <span id='date'>{{ date.strftime('%Y/%m/%d') }}</span></h2>
+  <p id='tmp'></p>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th scope="col" colspan="6">Monthly data</th>
+      </tr>
+      <tr>
+        <th scope="col" rowspan="2">Total traffic</th>
+        <th scope="col" id="mon_name0"></th>
+        <th scope="col" id="mon_name1"></th>
+        <th scope="col" id="mon_name2"></th>
+        <th scope="col" id="mon_name3"></th>
+      </tr>
+      <tr>
+        <td scope="col" id='md0'></th>
+        <td scope="col" id='md1'></th>
+        <td scope="col" id='md2'></th>
+        <td scope="col" id='md3'></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="col">Daily AVG</th>
+        <td scope="col" id="av0"></th>
+        <td scope="col" id="av1"></th>
+        <td scope="col" id="av2"></th>
+        <td scope="col" id="av3"></th>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th scope="col" colspan="2"></th>
+        <th scope="col">DOD</th>
+        <th scope="col">DOW</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Total traffic (TB):</th>
+        <td id="total_daily_traffic"></td>
+        <td id="daily_traffic_dod"></td>
+        <td id="daily_traffic_dow"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class='row'>
+    <div class='col-lg-6'>
+      <div id="daily_traffic_by_hour_chart"></div>
+    </div>
+    <div class='col-lg-6'>
+      <div id="traffic_dist_chart"></div>
+    </div>
+  </div>
+  <div class='row'>
+    <div class='col-lg-12'>
+      <div id="daily_traffic_chart"></div>
+    </div>
+  </div>
+</div>
+{% for issue in issues %}
+{% endfor %}
+{% endblock %}

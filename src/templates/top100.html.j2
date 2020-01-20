@@ -1,0 +1,55 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Top 100 Customers for {{ date.date() }}{% endblock %}
+
+{% block js_libs %}
+{% endblock %}
+
+{% block body %}
+{% include "spinner.html.j2" %}
+<table class='table table-light table-hover table-responsive table-sm' id='top_100_table' style='display: none;'>
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Customer</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+{% endblock %}
+
+{% block js %}
+<script>
+  date = $("#date").val()
+  $.ajax({
+    type: "GET",
+    url: "/date/" + date,
+    beforeSend: function () {
+      $("#spinner").show();
+    },
+    success: function (data) {
+      data.customers.forEach(
+        function (customer_name, i) {
+          var new_row = `<tr> \
+                      <td>${i+1}</td> \
+                      <td class='customer_cell'> \
+                        <a href='/${date}/${encodeURIComponent(customer_name)}'> \
+                        ${customer_name} \
+                        </a> \
+                      </td> \
+                      </tr>`
+          $('#top_100_table').append(new_row);
+        }
+      );
+      $("#spinner").hide();
+      $("#top_100_table").show();
+    }
+  });
+  search_button = document.getElementById("search");
+  search_button.onclick = function() {
+    date = $("#date").val()
+    location.href = `/${date}`;
+  };
+</script>
+{% endblock %}
